@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 """
     botly.py - A bitly Willie module
 
@@ -13,16 +14,36 @@ import bitly_api
 from willie.module import rule
 from willie.module import example
 from willie.module import commands
+from willie.config import ConfigurationError
 
 
 # Dumb regex for matching url link. Must be improved imo.
 RE_URL = '.*(?P<url>(http|https)://\S*)'
-# Access token for usign Bitly's API
-# cf. https://github.com/bitly/bitly-api-python/blob/master/README.md
-ACCESS_TOKEN = 'access_token'
+
+
+def configure(config):
+    """
+        | [botly] | example | purpose |
+        | ---- | ------- | ------- |
+        | access_token | default123 | The access token for Bitly |
+    """
+
+    # Access token for usign Bitly's API
+    # cf. https://github.com/bitly/bitly-api-python/blob/master/README.md
+    if config.option('Configure Botly', True):
+        config.add_section('botly')
+        config.interactive_add(
+            'botly',
+            'access_token',
+            'Enter the access token for Bitly:',
+            'default123'
+        )
 
 
 def setup(bot):
+    if not bot.config.has_option('botly', 'access_token'):
+        raise ConfigurationError, 'Botly needs the access token in order to use the Bitly API'
+
     regex = re.compile(RE_URL)
     if not bot.memory.contains(u'url_callbacks'):
         bot.memory[u'url_callbacks'] = {regex, bitly_url}
@@ -31,8 +52,10 @@ def setup(bot):
         exclude[regex] = bitly_url
         bot.memory[u'url_callbacks'] = exclude
 
-    if not bot.memory.contains(u'bitly_api'):
-        bot.memory[u'bitly_client'] = bitly_api.Connection(access_token=ACCESS_TOKEN)
+    if not bot.memory.contains(u'bitly_client'):
+        bot.memory[u'bitly_client'] = bitly_api.Connection(
+            access_token=bot.config.botly.access_token
+        )
 
 
 @rule(RE_URL)
@@ -72,8 +95,13 @@ def bitly_clicks(bot, trigger):
 
     if bot.memory.contains(u'bitly_client') and bot.memory.contains(u'bitly_url'):
         bot.say(
-            trigger.nick + ': ' +
-            str(bot.memory[u'bitly_client'].user_clicks()[u'total_clicks']) +
+            trigger.nick +
+            ': ' +
+            str(
+                bot.memory[u'bitly_client'].link_clicks(
+                    bot.memory[u'bitly_url'][u'url']
+                )
+            ) +
             ' click(s) on ' +
             bot.memory[u'bitly_url'][u'url']
         )
