@@ -23,26 +23,24 @@ ACCESS_TOKEN = 'access_token'
 
 
 def setup(bot):
-
     regex = re.compile(RE_URL)
-    if not bot.memory.contains('url_callbacks'):
-        bot.memory['url_callbacks'] = {regex, bitly_url}
+    if not bot.memory.contains(u'url_callbacks'):
+        bot.memory[u'url_callbacks'] = {regex, bitly_url}
     else:
-        exclude = bot.memory['url_callbacks']
+        exclude = bot.memory[u'url_callbacks']
         exclude[regex] = bitly_url
-        bot.memory['url_callbacks'] = exclude
+        bot.memory[u'url_callbacks'] = exclude
 
-    if not bot.memory.contains('bitly_api'):
-        bot.memory['bitly_client'] = bitly_api.Connection(access_token=ACCESS_TOKEN)
+    if not bot.memory.contains(u'bitly_api'):
+        bot.memory[u'bitly_client'] = bitly_api.Connection(access_token=ACCESS_TOKEN)
 
 
 @rule(RE_URL)
 def bitly_url(bot, trigger):
-    if bot.memory.contains('bitly_client'):
+    if bot.memory.contains(u'bitly_client'):
         try:
-            url = bot.memory['bitly_client'].shorten(trigger.group('url'))
-            bot.memory['bitly_url'] = url
-            bot.say(url['url'])
+            bot.memory[u'bitly_url'] = bot.memory[u'bitly_client'].shorten(trigger.group(u'url'))
+            bot.say(bot.memory[u'bitly_url'][u'url'])
         except bitly_api.BitlyError:
             # If Bitly failed, we do nothing.
             # Can happen when the matched url is already a bit.ly.
@@ -54,8 +52,8 @@ def bitly_url(bot, trigger):
 def bitly_last_url(bot, trigger):
     """Display the shortened version of the last URL using bitly."""
 
-    if bot.memory.contains('bitly_url'):
-        bot.say(trigger.nick + ': ' + bot.memory['bitly_url']['url'])
+    if bot.memory.contains(u'bitly_url'):
+        bot.say(trigger.nick + ': ' + bot.memory[u'bitly_url'][u'url'])
 
 
 @commands('expand', 'long')
@@ -63,8 +61,8 @@ def bitly_last_url(bot, trigger):
 def bitly_expand_url(bot, trigger):
     """Display the expanded version of the last bitly URL."""
 
-    if bot.memory.contains('bitly_url'):
-        bot.say(trigger.nick + ': ' + bot.memory['bitly_url']['long_url'])
+    if bot.memory.contains(u'bitly_url'):
+        bot.say(trigger.nick + ': ' + bot.memory[u'bitly_url'][u'long_url'])
 
 
 @commands('clicks')
@@ -72,10 +70,10 @@ def bitly_expand_url(bot, trigger):
 def bitly_clicks(bot, trigger):
     """Display the statistics about the user clicks on the last bitly URL."""
 
-    if bot.memory.contains('bitly_client') and bot.memory.contains('bitly_url'):
+    if bot.memory.contains(u'bitly_client') and bot.memory.contains(u'bitly_url'):
         bot.say(
             trigger.nick + ': ' +
-            str(bot.memory['bitly_client'].user_clicks()[u'total_clicks']) +
+            str(bot.memory[u'bitly_client'].user_clicks()[u'total_clicks']) +
             ' click(s) on ' +
-            bot.memory['bitly_url']['url']
+            bot.memory[u'bitly_url'][u'url']
         )
