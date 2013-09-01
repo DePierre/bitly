@@ -42,7 +42,9 @@ def configure(config):
 
 def setup(bot):
     if not bot.config.has_option('botly', 'access_token'):
-        raise ConfigurationError, 'Botly needs the access token in order to use the Bitly API'
+        raise ConfigurationError(
+            'Botly needs the access token in order to use the Bitly API'
+        )
 
     regex = re.compile(RE_URL)
     if not bot.memory.contains(u'url_callbacks'):
@@ -62,7 +64,9 @@ def setup(bot):
 def bitly_url(bot, trigger):
     if bot.memory.contains(u'bitly_client'):
         try:
-            bot.memory[u'bitly_url'] = bot.memory[u'bitly_client'].shorten(trigger.group(u'url'))
+            bot.memory[u'bitly_url'] = bot.memory[u'bitly_client'].shorten(
+                trigger.group(u'url')
+            )
             bot.say(bot.memory[u'bitly_url'][u'url'])
         except bitly_api.BitlyError:
             # If Bitly failed, we do nothing.
@@ -93,7 +97,8 @@ def bitly_expand_url(bot, trigger):
 def bitly_clicks(bot, trigger):
     """Display the statistics about the user clicks on the last bitly URL."""
 
-    if bot.memory.contains(u'bitly_client') and bot.memory.contains(u'bitly_url'):
+    if bot.memory.contains(u'bitly_client') and \
+            bot.memory.contains(u'bitly_url'):
         bot.say(
             trigger.nick +
             ': ' +
