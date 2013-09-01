@@ -17,8 +17,9 @@ from willie.module import commands
 from willie.config import ConfigurationError
 
 
-# Dumb regex for matching url link. Must be improved imo.
-RE_URL = '.*(?P<url>(http|https)://\S*)'
+# Not a hack. It's a walk around.
+RE_URL = r'https?://\S*'
+RE_HAS_URL = r'.*(' + RE_URL + ').*'
 
 
 def configure(config):
@@ -46,7 +47,7 @@ def setup(bot):
             'Botly needs the access token in order to use the Bitly API'
         )
 
-    regex = re.compile(RE_URL)
+    regex = re.compile(RE_HAS_URL)
     if not bot.memory.contains(u'url_callbacks'):
         bot.memory[u'url_callbacks'] = {regex, bitly_url}
     else:
@@ -60,18 +61,21 @@ def setup(bot):
         )
 
 
-@rule(RE_URL)
+@rule(RE_HAS_URL)
 def bitly_url(bot, trigger):
+    urls = re.findall(RE_URL, trigger)
+
     if bot.memory.contains(u'bitly_client'):
-        try:
-            bot.memory[u'bitly_url'] = bot.memory[u'bitly_client'].shorten(
-                trigger.group(u'url')
-            )
-            bot.say(bot.memory[u'bitly_url'][u'url'])
-        except bitly_api.BitlyError:
-            # If Bitly failed, we do nothing.
-            # Can happen when the matched url is already a bit.ly.
-            pass
+        for url in urls:
+            try:
+                bot.memory[u'bitly_url'] = bot.memory[u'bitly_client'].shorten(
+                    url
+                )
+                bot.say(bot.memory[u'bitly_url'][u'url'])
+            except bitly_api.BitlyError:
+                # If Bitly failed, we do nothing.
+                # Can happen when the matched url is already a bit.ly.
+                pass
 
 
 @commands('last', 'lastest', 'new', 'newest')
