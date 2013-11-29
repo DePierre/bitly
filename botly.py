@@ -39,6 +39,12 @@ def configure(config):
             'Enter the access token for Bitly:',
             'default123'
         )
+        config.interactive_add(
+            'botly',
+            'max_length',
+            'Enter the max length that an URL can be:',
+            79
+        )
 
 
 def setup(bot):
@@ -46,6 +52,13 @@ def setup(bot):
         raise ConfigurationError(
             'Botly needs the access token in order to use the Bitly API'
         )
+    if not bot.config.has_option('botly', 'max_length'):
+        bot.config.botly['max_length'] = 79
+    else:
+        try:
+            bot.config.botly.max_length = int(bot.config.botly.max_length)
+        except ValueError:  # Back to the default value
+            bot.config.botly['max_length'] = 79
 
     regex = re.compile(RE_HAS_URL)
     if not bot.memory.contains(u'url_callbacks'):
@@ -67,15 +80,16 @@ def bitly_url(bot, trigger):
 
     if bot.memory.contains(u'bitly_client'):
         for url in urls:
-            try:
-                bot.memory[u'bitly_url'] = bot.memory[u'bitly_client'].shorten(
-                    url
-                )
-                bot.say(bot.memory[u'bitly_url'][u'url'])
-            except bitly_api.BitlyError:
-                # If Bitly failed, we do nothing.
-                # Can happen when the matched url is already a bit.ly.
-                pass
+            if len(url) > bot.config.botly.max_length:
+                try:
+                    bot.memory[u'bitly_url'] = bot.memory[
+                        u'bitly_client'
+                    ].shorten(url)
+                    bot.say(bot.memory[u'bitly_url'][u'url'])
+                except bitly_api.BitlyError as e:
+                    # If Bitly failed, we do nothing.
+                    # Can happen when the matched url is already a bit.ly.
+                    pass
 
 
 @commands('last', 'lastest', 'new', 'newest')
