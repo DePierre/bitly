@@ -42,7 +42,7 @@ def configure(config):
         config.interactive_add(
             'botly',
             'max_length',
-            'Enter the max length that an URL can be:',
+            'Enter the max length of your irc client line:',
             79
         )
 
@@ -76,15 +76,17 @@ def setup(bot):
 
 @rule(RE_HAS_URL)
 def bitly_url(bot, trigger):
-    urls = re.findall(RE_URL, trigger)
+    urls = [m.span() for m in re.finditer(RE_URL, trigger)]
+    max_length = bot.config.botly.max_length
 
     if bot.memory.contains(u'bitly_client'):
-        for url in urls:
-            if len(url) > bot.config.botly.max_length:
+        for start, end in urls:
+            # If the URL is not inline
+            if start / max_length != end / max_length:
                 try:
                     bot.memory[u'bitly_url'] = bot.memory[
                         u'bitly_client'
-                    ].shorten(url)
+                    ].shorten(trigger[start:end])
                     bot.say(bot.memory[u'bitly_url'][u'url'])
                 except bitly_api.BitlyError as e:
                     # If Bitly failed, we do nothing.
