@@ -1,11 +1,14 @@
 # -*- coding: utf8 -*-
 """
-    botly.py - A bitly Willie module
+bitly.py - Willie Bitly Module
 
-    It shortens the URLs from the chanel using bit.ly API
-    and offers some features from the bitly's API.
+Copyright 2013, Tao Sauvage, depierre.tonbnc.fr
+Licensed under the Eiffel Forum License 2.
 
-    Commands: .last, .expand, .clicks
+http://willie.dfbta.net
+
+This module shortens the URLs using a python bitly api. Information about
+bitly-fied URLs can be retrieved with .last, .expand and .clicks.
 """
 
 
@@ -23,24 +26,28 @@ RE_HAS_URL = r'.*(' + RE_URL + ').*'
 
 
 def configure(config):
-    """
-        | [botly] | example | purpose |
+    """Provide configuration for Bitly uses.
+
+        | [bitly] | example | purpose |
         | ---- | ------- | ------- |
         | access_token | default123 | The access token for Bitly |
+        | max_length | 79 | The max length of your irc client line |
+
     """
 
-    # Access token for usign Bitly's API
-    # cf. https://github.com/bitly/bitly-api-python/blob/master/README.md
-    if config.option('Configure Botly', True):
-        config.add_section('botly')
+    if config.option('Configure Bitly', True):
+        # Access token for using Bitly's API
+        # cf. https://github.com/bitly/bitly-api-python/blob/master/README.md
+        config.add_section('bitly')
         config.interactive_add(
-            'botly',
+            'bitly',
             'access_token',
             'Enter the access token for Bitly:',
             'default123'
         )
+        # Max length of the irc client lines
         config.interactive_add(
-            'botly',
+            'bitly',
             'max_length',
             'Enter the max length of your irc client line:',
             79
@@ -48,17 +55,17 @@ def configure(config):
 
 
 def setup(bot):
-    if not bot.config.has_option('botly', 'access_token'):
+    if not bot.config.has_option('bitly', 'access_token'):
         raise ConfigurationError(
-            'Botly needs the access token in order to use the Bitly API'
+            'bitly needs the access token in order to use the Bitly API'
         )
-    if not bot.config.has_option('botly', 'max_length'):
-        bot.config.botly['max_length'] = 79
+    if not bot.config.has_option('bitly', 'max_length'):
+        bot.config.bitly['max_length'] = 79
     else:
         try:
-            bot.config.botly.max_length = int(bot.config.botly.max_length)
+            bot.config.bitly.max_length = int(bot.config.botly.max_length)
         except ValueError:  # Back to the default value
-            bot.config.botly['max_length'] = 79
+            bot.config.bitly['max_length'] = 79
 
     regex = re.compile(RE_HAS_URL)
     if not bot.memory.contains(u'url_callbacks'):
@@ -70,14 +77,15 @@ def setup(bot):
 
     if not bot.memory.contains(u'bitly_client'):
         bot.memory[u'bitly_client'] = bitly_api.Connection(
-            access_token=bot.config.botly.access_token
+            access_token=bot.config.bitly.access_token
         )
 
 
 @rule(RE_HAS_URL)
 def bitly_url(bot, trigger):
+    """Callback function when an URL is detected."""
     urls = [m.span() for m in re.finditer(RE_URL, trigger)]
-    max_length = bot.config.botly.max_length
+    max_length = bot.config.bitly.max_length
 
     if bot.memory.contains(u'bitly_client'):
         for start, end in urls:
