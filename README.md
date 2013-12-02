@@ -1,7 +1,8 @@
 Botly
 =====
 
-Simple Willie module which automatically shortens the URL from the chanel.
+Simple Willie module which automatically shortens the URL from the channel if
+it doesn't fit inline.
 
 Dependencies
 ------------
