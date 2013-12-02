@@ -28,14 +28,14 @@ RE_HAS_URL = r'.*(' + RE_URL + ').*'
 def configure(config):
     """Provide configuration for Bitly uses.
 
-        | [bitly] | example | purpose |
-        | ---- | ------- | ------- |
-        | access_token | default123 | The access token for Bitly |
-        | max_length | 79 | The max length of your irc client line |
+    | [bitly] | example | purpose |
+    | ---- | ------- | ------- |
+    | access_token | default123 | The access token for Bitly |
+    | max_length | 79 | The max length of your irc client line |
 
     """
 
-    if config.option('Configure Bitly', True):
+    if config.option('Configure Bitly', False):
         # Access token for using Bitly's API
         # cf. https://github.com/bitly/bitly-api-python/blob/master/README.md
         config.add_section('bitly')
@@ -60,12 +60,12 @@ def setup(bot):
             'bitly needs the access token in order to use the Bitly API'
         )
     if not bot.config.has_option('bitly', 'max_length'):
-        bot.config.bitly['max_length'] = 79
+        bot.config.bitly.max_length = 79
     else:
         try:
-            bot.config.bitly.max_length = int(bot.config.botly.max_length)
+            bot.config.bitly.max_length = int(bot.config.bitly.max_length)
         except ValueError:  # Back to the default value
-            bot.config.bitly['max_length'] = 79
+            bot.config.bitly.max_length = 79
 
     regex = re.compile(RE_HAS_URL)
     if not bot.memory.contains(u'url_callbacks'):
@@ -99,6 +99,7 @@ def bitly_url(bot, trigger):
                 except bitly_api.BitlyError as e:
                     # If Bitly failed, we do nothing.
                     # Can happen when the matched url is already a bit.ly.
+                    # TODO: Maybe we should log the errors
                     pass
 
 
